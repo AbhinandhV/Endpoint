@@ -1,0 +1,22 @@
+# .NET
+bin/
+obj/
+*.user
+*.suo
+*.vs/
+.vs/
+
+# Node
+node_modules/
+endpoint-dashboard/node_modules/
+
+# Build output
+endpoint-dashboard/build/
+
+# Backups (temporary)
+.backups/
+
+# OS
+Thumbs.db
+Desktop.ini
+.DS_Store
