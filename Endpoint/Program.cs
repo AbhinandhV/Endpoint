@@ -69,10 +69,11 @@ builder.Services.AddCors(options =>
             }
             else
             {
-                // Fallback: allow any origin for testing
-                policy.AllowAnyOrigin()
+                // Fallback: allow any origin for testing (no credentials)
+                policy.SetIsOriginAllowed(_ => true)
                       .AllowAnyMethod()
-                      .AllowAnyHeader();
+                      .AllowAnyHeader()
+                      .AllowCredentials();
             }
         }
     });
