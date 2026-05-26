@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: endpoint-api
+    runtime: docker
+    dockerfilePath: ./Endpoint/Dockerfile
+    dockerContext: ./Endpoint
+    envVars:
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Production
+      - key: ApiKey
+        generateValue: true
+      - key: AllowedOrigins__0
+        sync: false  # Set this to your Netlify frontend URL
+    healthCheckPath: /api/health/ping
+    autoDeploy: true

@@ -51,5 +51,13 @@ namespace Endpoint.Controllers
 
             return Ok(new { message = "Report received", device = report.DeviceName });
         }
+
+        // GET /api/health/ping — anonymous health check for Render/load balancers
+        [HttpGet("ping")]
+        [AllowAnonymous]
+        public IActionResult Ping()
+        {
+            return Ok(new { status = "healthy", timestamp = DateTime.UtcNow });
+        }
     }
 }
