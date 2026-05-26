@@ -2,8 +2,9 @@ services:
   - type: web
     name: endpoint-api
     runtime: docker
-    dockerfilePath: ./Endpoint/Dockerfile
-    dockerContext: ./Endpoint
+    rootDir: Endpoint
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
     envVars:
       - key: ASPNETCORE_ENVIRONMENT
         value: Production
