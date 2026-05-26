@@ -1,15 +1,20 @@
 using Endpoint.Models;
 using System.Diagnostics;
+using System.Runtime.InteropServices;
 
 namespace Endpoint.Services
 {
     public class PowerShellService
     {
         private readonly ILogger<PowerShellService> _logger;
+        private readonly bool _isWindows;
+        private readonly string _pwshPath;
 
         public PowerShellService(ILogger<PowerShellService> logger)
         {
             _logger = logger;
+            _isWindows = RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
+            _pwshPath = _isWindows ? "powershell.exe" : "pwsh";
         }
 
         public Task<(string output, string error, int exitCode)> ExecuteAsync(string script, int timeoutSeconds = 30)
@@ -18,49 +23,64 @@ namespace Endpoint.Services
         public async Task<(string output, string error, int exitCode)> ExecuteAsync(
             string script, int timeoutSeconds, bool requiresAdmin)
         {
-            _logger.LogInformation("Executing PowerShell script (timeout: {Timeout}s, admin: {Admin})",
-                timeoutSeconds, requiresAdmin);
+            _logger.LogInformation("Executing PowerShell script (timeout: {Timeout}s, admin: {Admin}, OS: {OS})",
+                timeoutSeconds, requiresAdmin, _isWindows ? "Windows" : "Linux");
 
-            if (requiresAdmin)
+            // On Linux, admin elevation doesn't apply the same way
+            if (requiresAdmin && !_isWindows)
+            {
+                _logger.LogWarning("Admin scripts on Linux run without elevation");
+            }
+
+            if (requiresAdmin && _isWindows)
                 return await ExecuteElevatedAsync(script, timeoutSeconds);
 
-            // Non-admin: run hidden with redirected output
+            // Non-admin or Linux: run with redirected output
             var tempFile = Path.Combine(Path.GetTempPath(), $"ep_{Guid.NewGuid():N}.ps1");
-            await File.WriteAllTextAsync(tempFile, script);
-
-            var psi = new ProcessStartInfo
-            {
-                FileName = "powershell.exe",
-                Arguments = $"-NoProfile -NonInteractive -ExecutionPolicy Bypass -File \"{tempFile}\"",
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                UseShellExecute = false,
-                CreateNoWindow = true
-            };
-
-            using var process = new Process { StartInfo = psi };
-            process.Start();
-
-            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(timeoutSeconds));
-
+            
             try
             {
-                var outputTask = process.StandardOutput.ReadToEndAsync();
-                var errorTask = process.StandardError.ReadToEndAsync();
+                await File.WriteAllTextAsync(tempFile, script);
 
-                await process.WaitForExitAsync(cts.Token);
+                var psi = new ProcessStartInfo
+                {
+                    FileName = _pwshPath,
+                    Arguments = $"-NoProfile -NonInteractive -ExecutionPolicy Bypass -File \"{tempFile}\"",
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+                };
 
-                var output = await outputTask;
-                var error = await errorTask;
+                using var process = new Process { StartInfo = psi };
+                process.Start();
 
-                _logger.LogInformation("PowerShell completed with exit code {ExitCode}", process.ExitCode);
-                return (output.Trim(), error.Trim(), process.ExitCode);
+                using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(timeoutSeconds));
+
+                try
+                {
+                    var outputTask = process.StandardOutput.ReadToEndAsync();
+                    var errorTask = process.StandardError.ReadToEndAsync();
+
+                    await process.WaitForExitAsync(cts.Token);
+
+                    var output = await outputTask;
+                    var error = await errorTask;
+
+                    _logger.LogInformation("PowerShell completed with exit code {ExitCode}", process.ExitCode);
+                    return (output.Trim(), error.Trim(), process.ExitCode);
+                }
+                catch (OperationCanceledException)
+                {
+                    try { process.Kill(true); } catch { }
+                    _logger.LogWarning("PowerShell script timed out after {Timeout}s", timeoutSeconds);
+                    return ("", $"Script timed out after {timeoutSeconds} seconds", -1);
+                }
             }
-            catch (OperationCanceledException)
+            catch (Exception ex)
             {
-                try { process.Kill(true); } catch { }
-                _logger.LogWarning("PowerShell script timed out after {Timeout}s", timeoutSeconds);
-                return ("", $"Script timed out after {timeoutSeconds} seconds", -1);
+                _logger.LogError(ex, "Failed to execute PowerShell script");
+                return ("", $"Script execution failed: {ex.Message}", -1);
             }
             finally
             {
