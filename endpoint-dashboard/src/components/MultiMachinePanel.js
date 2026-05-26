@@ -10,10 +10,6 @@ export default function MultiMachinePanel({ categories, addNotification }) {
     const [results, setResults] = useState(null);
     const [uploading, setUploading] = useState(false);
 
-    const allActions = categories.flatMap((cat) =>
-        cat.actions.map((a) => ({ ...a, categoryTitle: cat.title }))
-    );
-
     const addDevices = () => {
         const names = deviceInput
             .split(/[,\n;]+/)
