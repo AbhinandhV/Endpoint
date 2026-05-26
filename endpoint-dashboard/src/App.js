@@ -8,6 +8,7 @@ import HistoryPanel from "./components/HistoryPanel";
 import Notification from "./components/Notification";
 import MultiMachinePanel from "./components/MultiMachinePanel";
 import Icon from "./components/Icon";
+import ApiKeyLogin from "./components/ApiKeyLogin";
 
 function App() {
     const [categories, setCategories] = useState([]);
@@ -19,9 +20,27 @@ function App() {
     const [activeTab, setActiveTab] = useState("actions");
     const [loading, setLoading] = useState(true);
     const [currentUser, setCurrentUser] = useState(null);
+    const [authenticated, setAuthenticated] = useState(!api.isCloudMode() || api.hasApiKey());
+
+    // Handle API key login
+    const handleLogin = (apiKey) => {
+        api.setApiKey(apiKey);
+        setAuthenticated(true);
+    };
+
+    // Handle logout
+    const handleLogout = () => {
+        api.clearApiKey();
+        setAuthenticated(false);
+        setCategories([]);
+        setDevices([]);
+        setHistory([]);
+    };
 
     // Load initial data
     useEffect(() => {
+        if (!authenticated) return;
+        
         Promise.all([
             api.getCategories().catch(() => []),
             api.getDevices().catch(() => []),
@@ -34,7 +53,7 @@ function App() {
             setCurrentUser(user);
             setLoading(false);
         });
-    }, []);
+    }, [authenticated]);
 
     const refreshDevices = useCallback(() => {
         api.getDevices().then(setDevices).catch(() => {});
@@ -133,6 +152,11 @@ function App() {
 
     const totalActions = filteredCategories.reduce((sum, c) => sum + c.actions.length, 0);
 
+    // Show login screen for cloud mode without API key
+    if (!authenticated) {
+        return <ApiKeyLogin onLogin={handleLogin} />;
+    }
+
     if (loading) {
         return (
             <div className="app" style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -170,6 +194,11 @@ function App() {
                             <span className="user-badge" title={currentUser.user}>
                                 <Icon name="user" /> {currentUser.user?.split("\\").pop()}
                             </span>
+                        )}
+                        {api.isCloudMode() && (
+                            <button className="btn btn-sm btn-ghost" onClick={handleLogout}>
+                                <Icon name="logout" /> Logout
+                            </button>
                         )}
                     </div>
                 </div>

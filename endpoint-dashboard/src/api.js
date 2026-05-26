@@ -5,14 +5,43 @@ const API_BASE = process.env.REACT_APP_API_BASE
         ? "http://localhost:5252/api"
         : "/api";
 
-// Helper to include credentials (Windows Auth) with every request
-const authFetch = (url, options = {}) =>
-    fetch(url, { credentials: "include", ...options }).then(r => {
+// API Key for cloud authentication (stored in sessionStorage after login)
+const getApiKey = () => sessionStorage.getItem("apiKey");
+const setApiKey = (key) => sessionStorage.setItem("apiKey", key);
+const clearApiKey = () => sessionStorage.removeItem("apiKey");
+
+// Check if we're using cloud API (not localhost or same-origin)
+const isCloudApi = () => !!process.env.REACT_APP_API_BASE;
+
+// Helper to include credentials (Windows Auth) or API Key header
+const authFetch = (url, options = {}) => {
+    const headers = { ...options.headers };
+    
+    // Use API Key for cloud deployment
+    if (isCloudApi()) {
+        const apiKey = getApiKey();
+        if (apiKey) {
+            headers["X-Api-Key"] = apiKey;
+        }
+    }
+    
+    return fetch(url, {
+        credentials: isCloudApi() ? "omit" : "include",
+        ...options,
+        headers
+    }).then(r => {
         if (r.status === 401) throw new Error("Authentication required. Please log in.");
         return r.json();
     });
+};
 
 export const api = {
+    // Auth helpers
+    isCloudMode: isCloudApi,
+    hasApiKey: () => !!getApiKey(),
+    setApiKey,
+    clearApiKey,
+    
     // Auth
     getCurrentUser: () => authFetch(`${API_BASE}/actions/me`),
     getAuditLogs: (limit = 100) => authFetch(`${API_BASE}/actions/audit?limit=${limit}`),
@@ -50,9 +79,15 @@ export const api = {
     uploadDevices: (file) => {
         const formData = new FormData();
         formData.append("file", file);
+        const headers = {};
+        if (isCloudApi()) {
+            const apiKey = getApiKey();
+            if (apiKey) headers["X-Api-Key"] = apiKey;
+        }
         return fetch(`${API_BASE}/actions/upload-devices`, {
             method: "POST",
-            credentials: "include",
+            credentials: isCloudApi() ? "omit" : "include",
+            headers,
             body: formData
         }).then(r => r.json());
     }
