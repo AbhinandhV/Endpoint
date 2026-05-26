@@ -6,6 +6,7 @@ import ActionCard from "./components/ActionCard";
 import DevicePanel from "./components/DevicePanel";
 import HistoryPanel from "./components/HistoryPanel";
 import Notification from "./components/Notification";
+import MultiMachinePanel from "./components/MultiMachinePanel";
 import Icon from "./components/Icon";
 
 function App() {
@@ -17,17 +18,20 @@ function App() {
     const [search, setSearch] = useState("");
     const [activeTab, setActiveTab] = useState("actions");
     const [loading, setLoading] = useState(true);
+    const [currentUser, setCurrentUser] = useState(null);
 
     // Load initial data
     useEffect(() => {
         Promise.all([
             api.getCategories().catch(() => []),
             api.getDevices().catch(() => []),
-            api.getHistory(20).catch(() => [])
-        ]).then(([cats, devs, hist]) => {
+            api.getHistory(20).catch(() => []),
+            api.getCurrentUser().catch(() => null)
+        ]).then(([cats, devs, hist, user]) => {
             setCategories(cats);
             setDevices(devs);
             setHistory(hist);
+            setCurrentUser(user);
             setLoading(false);
         });
     }, []);
@@ -38,6 +42,12 @@ function App() {
 
     const refreshHistory = useCallback(() => {
         api.getHistory(20).then(setHistory).catch(() => {});
+    }, []);
+
+    // Notification helpers
+    const addNotification = useCallback((type, title, message) => {
+        const id = Date.now();
+        setNotifications((prev) => [...prev, { id, type, title, message }]);
     }, []);
 
     const refreshAll = useCallback(() => {
@@ -53,12 +63,6 @@ function App() {
             addNotification("success", "Refreshed", "Dashboard data updated");
         });
     }, [addNotification]);
-
-    // Notification helpers
-    const addNotification = useCallback((type, title, message) => {
-        const id = Date.now();
-        setNotifications((prev) => [...prev, { id, type, title, message }]);
-    }, []);
 
     const removeNotification = useCallback((id) => {
         setNotifications((prev) => prev.filter((n) => n.id !== id));
@@ -162,6 +166,11 @@ function App() {
                         <button className="btn btn-sm btn-ghost" onClick={refreshAll}>
                             <Icon name="refresh" /> Refresh
                         </button>
+                        {currentUser && (
+                            <span className="user-badge" title={currentUser.user}>
+                                <Icon name="user" /> {currentUser.user?.split("\\").pop()}
+                            </span>
+                        )}
                     </div>
                 </div>
             </header>
@@ -185,6 +194,12 @@ function App() {
                         onClick={() => setActiveTab("history")}
                     >
                         <Icon name="history" /> History ({history.length})
+                    </button>
+                    <button
+                        className={`tab-btn ${activeTab === "multi" ? "active" : ""}`}
+                        onClick={() => setActiveTab("multi")}
+                    >
+                        <Icon name="devices" /> Multi-Machine
                     </button>
                 </div>
 
@@ -215,6 +230,13 @@ function App() {
                     <HistoryPanel
                         history={history}
                         onRetry={retryAction}
+                    />
+                )}
+
+                {activeTab === "multi" && (
+                    <MultiMachinePanel
+                        categories={categories}
+                        addNotification={addNotification}
                     />
                 )}
             </main>

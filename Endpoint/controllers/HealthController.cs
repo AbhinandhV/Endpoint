@@ -1,13 +1,15 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using Endpoint.Models;
 
 namespace Endpoint.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize]
     public class HealthController : ControllerBase
     {
-        private static readonly List<HealthReport> _devices = new();
+        private static readonly List<HealthReport> _devices = new();// In-memory list to store health reports
 
         // GET /api/health — return all device health reports
         [HttpGet]
