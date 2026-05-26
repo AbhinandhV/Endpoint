@@ -1,6 +1,7 @@
 [build]
+  base = "endpoint-dashboard"
   command = "npm run build"
-  publish = "build"
+  publish = "endpoint-dashboard/build"
 
 # SPA redirect — all routes go to index.html
 [[redirects]]
