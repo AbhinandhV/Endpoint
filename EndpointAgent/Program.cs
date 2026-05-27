@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using System.Management.Automation;
 using System.Net.Http.Json;
 using System.Text.Json;
 
@@ -129,32 +128,35 @@ class Program
 
         try
         {
-            // Execute PowerShell
-            using var ps = PowerShell.Create();
-            ps.AddScript(cmd.Script);
-            
-            var output = new List<string>();
-            var errors = new List<string>();
-
-            ps.Streams.Error.DataAdded += (s, e) => {
-                errors.Add(ps.Streams.Error[e.Index].ToString());
+            // Execute PowerShell via process
+            var psi = new ProcessStartInfo
+            {
+                FileName = "powershell.exe",
+                Arguments = $"-NoProfile -NonInteractive -ExecutionPolicy Bypass -Command \"{cmd.Script.Replace("\"", "\\\"")}\"",
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+                CreateNoWindow = true
             };
 
-            var results = await Task.Run(() => ps.Invoke());
-            
-            foreach (var r in results)
+            using var process = Process.Start(psi);
+            if (process == null)
             {
-                if (r != null) output.Add(r.ToString());
+                throw new Exception("Failed to start PowerShell process");
             }
+
+            var output = await process.StandardOutput.ReadToEndAsync();
+            var error = await process.StandardError.ReadToEndAsync();
+            await process.WaitForExitAsync();
 
             sw.Stop();
             result.DurationMs = (int)sw.ElapsedMilliseconds;
-            result.Output = string.Join(Environment.NewLine, output);
+            result.Output = output.Trim();
             
-            if (errors.Count > 0)
+            if (!string.IsNullOrEmpty(error) || process.ExitCode != 0)
             {
-                result.Error = string.Join(Environment.NewLine, errors);
-                result.Status = ps.HadErrors ? "Failed" : "Completed";
+                result.Error = error.Trim();
+                result.Status = process.ExitCode != 0 ? "Failed" : "Completed";
             }
 
             Console.WriteLine($"    -> {result.Status} ({result.DurationMs}ms)");

@@ -18,7 +18,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="System.Management.Automation" Version="7.4.1" />
+    <!-- No external packages needed - using built-in Process for PowerShell execution -->
   </ItemGroup>
 
 </Project>
