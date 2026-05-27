@@ -212,10 +212,13 @@ function AgentPanel({ categories, addNotification }) {
 
 function formatTime(dateStr) {
     if (!dateStr) return "Never";
-    const date = new Date(dateStr);
+    // Handle UTC time from API (add Z if missing)
+    const utcStr = dateStr.endsWith('Z') ? dateStr : dateStr + 'Z';
+    const date = new Date(utcStr);
     const now = new Date();
     const diff = (now - date) / 1000;
 
+    if (diff < 0) return "Just now"; // Future time (clock skew)
     if (diff < 60) return "Just now";
     if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
     if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
