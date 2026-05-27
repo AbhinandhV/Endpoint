@@ -7,6 +7,7 @@ import DevicePanel from "./components/DevicePanel";
 import HistoryPanel from "./components/HistoryPanel";
 import Notification from "./components/Notification";
 import MultiMachinePanel from "./components/MultiMachinePanel";
+import AgentPanel from "./components/AgentPanel";
 import Icon from "./components/Icon";
 import ApiKeyLogin from "./components/ApiKeyLogin";
 
@@ -213,6 +214,12 @@ function App() {
                         <Icon name="play" /> Actions
                     </button>
                     <button
+                        className={`tab-btn ${activeTab === "agents" ? "active" : ""}`}
+                        onClick={() => setActiveTab("agents")}
+                    >
+                        <Icon name="server" /> Remote Agents
+                    </button>
+                    <button
                         className={`tab-btn ${activeTab === "devices" ? "active" : ""}`}
                         onClick={() => setActiveTab("devices")}
                     >
@@ -249,6 +256,13 @@ function App() {
                             ))
                         )}
                     </>
+                )}
+
+                {activeTab === "agents" && (
+                    <AgentPanel
+                        categories={categories}
+                        addNotification={addNotification}
+                    />
                 )}
 
                 {activeTab === "devices" && (

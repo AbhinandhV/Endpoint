@@ -5,6 +5,7 @@ obj/
 *.suo
 *.vs/
 .vs/
+publish/
 
 # Node
 node_modules/
@@ -12,6 +13,7 @@ endpoint-dashboard/node_modules/
 
 # Build output
 endpoint-dashboard/build/
+EndpointAgent/publish/
 
 # Database
 *.db

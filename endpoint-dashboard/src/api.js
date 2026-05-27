@@ -90,5 +90,14 @@ export const api = {
             headers,
             body: formData
         }).then(r => r.json());
-    }
+    },
+
+    // Agent endpoints (for remote execution on endpoints)
+    getAgents: () => authFetch(`${API_BASE}/agent/list`),
+    queueCommand: (agentId, actionId, actionName, script) => authFetch(`${API_BASE}/agent/queue`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ agentId, actionId, actionName, script })
+    }),
+    getAgentCommands: (agentId, limit = 20) => authFetch(`${API_BASE}/agent/commands/${agentId}?limit=${limit}`)
 };

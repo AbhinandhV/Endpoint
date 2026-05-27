@@ -1039,3 +1039,160 @@ body {
     white-space: pre-wrap;
     word-break: break-word;
 }
+
+/* ==========================================
+   Agent Panel Styles
+   ========================================== */
+
+.agent-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.agent-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.agent-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    border-radius: var(--radius);
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.agent-item:hover {
+    background: var(--bg-card-hover);
+    border-color: var(--border-light);
+}
+
+.agent-item.selected {
+    background: var(--accent-bg);
+    border-color: var(--accent);
+}
+
+.agent-status {
+    display: flex;
+    align-items: center;
+}
+
+.status-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--text-muted);
+}
+
+.status-dot.online {
+    background: var(--success);
+    box-shadow: 0 0 8px var(--success);
+}
+
+.status-dot.offline {
+    background: var(--error);
+}
+
+.agent-info {
+    flex: 1;
+}
+
+.agent-name {
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.agent-meta {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-top: 2px;
+}
+
+.form-group {
+    margin-bottom: 16px;
+}
+
+.form-group label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+}
+
+.form-select {
+    width: 100%;
+    padding: 10px 12px;
+    font-size: 14px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--bg-input);
+    color: var(--text-primary);
+}
+
+.form-select:focus {
+    outline: none;
+    border-color: var(--accent);
+}
+
+.action-preview {
+    padding: 12px;
+    border-radius: var(--radius);
+    background: var(--bg-secondary);
+    margin-bottom: 16px;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 32px 16px;
+}
+
+.text-sm {
+    font-size: 12px;
+}
+
+.badge-info {
+    background: var(--info);
+    color: white;
+}
+
+.badge-warning {
+    background: var(--warning);
+    color: #000;
+}
+
+.badge-default {
+    background: var(--bg-secondary);
+    color: var(--text-secondary);
+}
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+}
+
+.table th,
+.table td {
+    padding: 10px 12px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+}
+
+.table th {
+    font-weight: 600;
+    color: var(--text-secondary);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.table tr:last-child td {
+    border-bottom: none;
+}
