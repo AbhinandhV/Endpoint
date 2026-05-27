@@ -92,13 +92,14 @@ class Program
         // Heartbeat and get pending commands
         var response = await _http.GetAsync($"/api/agent/poll/{_agentId}");
         
+        // 204 No Content means no commands pending - this is normal
+        if (response.StatusCode == System.Net.HttpStatusCode.NoContent)
+        {
+            return;
+        }
+        
         if (!response.IsSuccessStatusCode)
         {
-            if (response.StatusCode == System.Net.HttpStatusCode.NoContent)
-            {
-                // No commands pending - this is normal
-                return;
-            }
             Console.WriteLine($"[{DateTime.Now:HH:mm:ss}] Poll failed: {response.StatusCode}");
             return;
         }
