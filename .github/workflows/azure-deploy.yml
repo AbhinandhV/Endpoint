@@ -1,0 +1,36 @@
+name: Deploy to Azure App Service
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'Endpoint/**'
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    runs-on: windows-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '6.0.x'
+
+    - name: Restore dependencies
+      run: dotnet restore Endpoint/Endpoint.csproj
+
+    - name: Build
+      run: dotnet build Endpoint/Endpoint.csproj --configuration Release --no-restore
+
+    - name: Publish
+      run: dotnet publish Endpoint/Endpoint.csproj --configuration Release --output ./publish --no-build
+
+    - name: Deploy to Azure Web App
+      uses: azure/webapps-deploy@v3
+      with:
+        app-name: ${{ secrets.AZURE_WEBAPP_NAME }}
+        publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+        package: ./publish
