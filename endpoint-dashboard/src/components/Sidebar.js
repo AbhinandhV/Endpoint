@@ -14,7 +14,6 @@ export default function Sidebar({ activeTab, setActiveTab, collapsed, setCollaps
         {
             section: "Resources",
             items: [
-                { id: "knowledge", label: "Knowledge Base", icon: "book", external: "https://hrb-dwp.onbmc.com/dwp/app/#/search/1mfnekck" },
                 { id: "support", label: "IT Support", icon: "help", external: "https://hrblock.sharepoint.com/sites/CorporateTechnologySupport" },
             ]
         }
@@ -23,8 +22,8 @@ export default function Sidebar({ activeTab, setActiveTab, collapsed, setCollaps
     return (
         <aside className={`sidebar ${collapsed ? "collapsed" : ""}`}>
             <div className="sidebar-brand">
-                <div className="sidebar-logo">SS</div>
-                <span className="sidebar-brand-text">SnapSupport</span>
+                <div className="sidebar-logo">QF</div>
+                <span className="sidebar-brand-text">QuickFix</span>
             </div>
 
             <nav className="sidebar-nav">
