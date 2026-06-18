@@ -6,70 +6,87 @@ export default function ActionCard({ category, onExecute, actionStates }) {
     const [activeLog, setActiveLog] = useState(null);
 
     return (
-        <div className="action-card">
-            <div className="action-card-header" onClick={() => setExpanded(!expanded)}>
-                <div className="action-card-title">
-                    <Icon name={category.icon} className="category-icon" />
+        <div className="action-category">
+            <div className="action-category-header" onClick={() => setExpanded(!expanded)}>
+                <div className="action-category-title">
+                    <div className="category-icon">
+                        <Icon name={category.icon} />
+                    </div>
                     <div>
                         <h2>{category.title}</h2>
                         <p>{category.description}</p>
                     </div>
                 </div>
-                <Icon name={expanded ? "chevronUp" : "chevronDown"} />
+                <button className="btn btn-sm btn-ghost btn-icon">
+                    <Icon name={expanded ? "chevronUp" : "chevronDown"} />
+                </button>
             </div>
 
             {expanded && (
-                <div className="action-list">
+                <div className="action-cards-grid">
                     {category.actions.map((action) => {
                         const state = actionStates[action.id] || {};
                         const isRunning = state.status === "running";
                         const hasResult = state.status === "success" || state.status === "failed";
 
                         return (
-                            <div key={action.id} className="action-item">
-                                <div className="action-item-info">
-                                    <div className="action-item-name">
-                                        {action.name}
-                                        {action.requiresAdmin && (
-                                            <span className="admin-badge" title="Requires admin">
-                                                <Icon name="shield" /> Admin
-                                            </span>
-                                        )}
+                            <div key={action.id} className={`action-card-item ${hasResult ? `status-${state.status}` : ''}`}>
+                                <div className="action-card-item-header">
+                                    <div className="action-card-icon">
+                                        <Icon name="play" />
                                     </div>
-                                    <div className="action-item-desc">{action.description}</div>
-                                </div>
-                                <div className="action-item-controls">
-                                    {hasResult && (
-                                        <span className={`status-badge badge-${state.status}`}>
-                                            <Icon name={state.status === "success" ? "check" : "x"} />
-                                            {state.status === "success" ? "Success" : "Failed"}
-                                            {state.durationMs && (
-                                                <span className="duration"> ({state.durationMs}ms)</span>
-                                            )}
+                                    {action.requiresAdmin && (
+                                        <span className="admin-badge">
+                                            <Icon name="shield" /> Admin
                                         </span>
                                     )}
+                                </div>
+                                <div className="action-card-item-body">
+                                    <h3 className="action-card-item-name">{action.name}</h3>
+                                    <p className="action-card-item-desc">{action.description}</p>
+                                </div>
+                                <div className="action-card-item-footer">
                                     {hasResult && (
-                                        <button
-                                            className="btn btn-sm btn-ghost"
-                                            onClick={() => setActiveLog(activeLog === action.id ? null : action.id)}
-                                        >
-                                            {activeLog === action.id ? "Hide Log" : "View Log"}
-                                        </button>
+                                        <div className="action-card-status">
+                                            <span className={`status-badge badge-${state.status}`}>
+                                                <Icon name={state.status === "success" ? "check" : "x"} />
+                                                {state.status === "success" ? "Success" : "Failed"}
+                                            </span>
+                                            {state.durationMs && (
+                                                <span className="duration-text">{state.durationMs}ms</span>
+                                            )}
+                                        </div>
                                     )}
-                                    <button
-                                        className={`btn btn-sm ${isRunning ? "btn-disabled" : "btn-primary"}`}
-                                        onClick={() => onExecute(action.id)}
-                                        disabled={isRunning}
-                                    >
-                                        {isRunning ? (
-                                            <><span className="spinner" /> Running...</>
-                                        ) : (
-                                            <><Icon name="play" /> Run</>
+                                    <div className="action-card-actions">
+                                        {hasResult && (
+                                            <button
+                                                className="btn btn-sm btn-ghost"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setActiveLog(activeLog === action.id ? null : action.id);
+                                                }}
+                                            >
+                                                {activeLog === action.id ? "Hide" : "Log"}
+                                            </button>
                                         )}
-                                    </button>
+                                        <button
+                                            className={`btn btn-sm ${isRunning ? "btn-disabled" : "btn-primary"}`}
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                onExecute(action.id);
+                                            }}
+                                            disabled={isRunning}
+                                        >
+                                            {isRunning ? (
+                                                <><span className="spinner spinner-sm" /></>
+                                            ) : (
+                                                <><Icon name="play" /> Run</>
+                                            )}
+                                        </button>
+                                    </div>
                                 </div>
                                 {activeLog === action.id && state.output && (
-                                    <div className="action-log-inline">
+                                    <div className="action-card-log">
                                         <pre>{state.output}</pre>
                                         {state.error && <pre className="log-error-mini">{state.error}</pre>}
                                     </div>

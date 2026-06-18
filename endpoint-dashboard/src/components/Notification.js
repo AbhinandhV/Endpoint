@@ -21,11 +21,13 @@ function NotificationItem({ notification, onDismiss }) {
         return () => clearTimeout(timer);
     }, [onDismiss]);
 
-    const icon = notification.type === "success" ? "check" : "x";
+    const icon = notification.type === "success" ? "check" : notification.type === "warning" ? "warning" : "x";
 
     return (
         <div className={`notification notification-${notification.type}`}>
-            <Icon name={icon} />
+            <span className="notification-icon">
+                <Icon name={icon} />
+            </span>
             <div className="notification-content">
                 <strong>{notification.title}</strong>
                 <span>{notification.message}</span>
