@@ -3,17 +3,12 @@ import "./App.css";
 import { api } from "./api";
 import SearchBar from "./components/SearchBar";
 import ActionCard from "./components/ActionCard";
-import DevicePanel from "./components/DevicePanel";
 import HistoryPanel from "./components/HistoryPanel";
 import Notification from "./components/Notification";
-import MultiMachinePanel from "./components/MultiMachinePanel";
-import AgentPanel from "./components/AgentPanel";
 import Icon from "./components/Icon";
-import ApiKeyLogin from "./components/ApiKeyLogin";
 
 function App() {
     const [categories, setCategories] = useState([]);
-    const [devices, setDevices] = useState([]);
     const [history, setHistory] = useState([]);
     const [actionStates, setActionStates] = useState({});
     const [notifications, setNotifications] = useState([]);
@@ -21,43 +16,19 @@ function App() {
     const [activeTab, setActiveTab] = useState("actions");
     const [loading, setLoading] = useState(true);
     const [currentUser, setCurrentUser] = useState(null);
-    const [authenticated, setAuthenticated] = useState(!api.isCloudMode() || api.hasApiKey());
-
-    // Handle API key login
-    const handleLogin = (apiKey) => {
-        api.setApiKey(apiKey);
-        setAuthenticated(true);
-    };
-
-    // Handle logout
-    const handleLogout = () => {
-        api.clearApiKey();
-        setAuthenticated(false);
-        setCategories([]);
-        setDevices([]);
-        setHistory([]);
-    };
 
     // Load initial data
     useEffect(() => {
-        if (!authenticated) return;
-        
         Promise.all([
             api.getCategories().catch(() => []),
-            api.getDevices().catch(() => []),
             api.getHistory(20).catch(() => []),
             api.getCurrentUser().catch(() => null)
-        ]).then(([cats, devs, hist, user]) => {
+        ]).then(([cats, hist, user]) => {
             setCategories(cats);
-            setDevices(devs);
             setHistory(hist);
             setCurrentUser(user);
             setLoading(false);
         });
-    }, [authenticated]);
-
-    const refreshDevices = useCallback(() => {
-        api.getDevices().then(setDevices).catch(() => {});
     }, []);
 
     const refreshHistory = useCallback(() => {
@@ -74,11 +45,9 @@ function App() {
         setActionStates({});
         Promise.all([
             api.getCategories().catch(() => []),
-            api.getDevices().catch(() => []),
             api.getHistory(20).catch(() => [])
-        ]).then(([cats, devs, hist]) => {
+        ]).then(([cats, hist]) => {
             setCategories(cats);
-            setDevices(devs);
             setHistory(hist);
             addNotification("success", "Refreshed", "Dashboard data updated");
         });
@@ -114,7 +83,6 @@ function App() {
             }
 
             // Refresh related data
-            refreshDevices();
             refreshHistory();
         } catch (err) {
             setActionStates((prev) => ({
@@ -123,7 +91,7 @@ function App() {
             }));
             addNotification("error", "Action Failed", err.message);
         }
-    }, [addNotification, refreshDevices, refreshHistory]);
+    }, [addNotification, refreshHistory]);
 
     // Retry a failed action
     const retryAction = useCallback(async (historyId) => {
@@ -131,11 +99,10 @@ function App() {
             await api.retryAction(historyId);
             addNotification("success", "Retry Completed", "Action retried successfully");
             refreshHistory();
-            refreshDevices();
         } catch {
             addNotification("error", "Retry Failed", "Could not retry the action");
         }
-    }, [addNotification, refreshHistory, refreshDevices]);
+    }, [addNotification, refreshHistory]);
 
     // Filter categories based on search
     const filteredCategories = categories.map((cat) => ({
@@ -152,11 +119,6 @@ function App() {
     })).filter((cat) => cat.actions.length > 0);
 
     const totalActions = filteredCategories.reduce((sum, c) => sum + c.actions.length, 0);
-
-    // Show login screen for cloud mode without API key
-    if (!authenticated) {
-        return <ApiKeyLogin onLogin={handleLogin} />;
-    }
 
     if (loading) {
         return (
@@ -196,11 +158,6 @@ function App() {
                                 <Icon name="user" /> {currentUser.user?.split("\\").pop()}
                             </span>
                         )}
-                        {api.isCloudMode() && (
-                            <button className="btn btn-sm btn-ghost" onClick={handleLogout}>
-                                <Icon name="logout" /> Logout
-                            </button>
-                        )}
                     </div>
                 </div>
             </header>
@@ -214,28 +171,10 @@ function App() {
                         <Icon name="play" /> Actions
                     </button>
                     <button
-                        className={`tab-btn ${activeTab === "agents" ? "active" : ""}`}
-                        onClick={() => setActiveTab("agents")}
-                    >
-                        <Icon name="server" /> Remote Agents
-                    </button>
-                    <button
-                        className={`tab-btn ${activeTab === "devices" ? "active" : ""}`}
-                        onClick={() => setActiveTab("devices")}
-                    >
-                        <Icon name="monitor" /> Devices ({devices.length})
-                    </button>
-                    <button
                         className={`tab-btn ${activeTab === "history" ? "active" : ""}`}
                         onClick={() => setActiveTab("history")}
                     >
                         <Icon name="history" /> History ({history.length})
-                    </button>
-                    <button
-                        className={`tab-btn ${activeTab === "multi" ? "active" : ""}`}
-                        onClick={() => setActiveTab("multi")}
-                    >
-                        <Icon name="devices" /> Multi-Machine
                     </button>
                 </div>
 
@@ -258,17 +197,6 @@ function App() {
                     </>
                 )}
 
-                {activeTab === "agents" && (
-                    <AgentPanel
-                        categories={categories}
-                        addNotification={addNotification}
-                    />
-                )}
-
-                {activeTab === "devices" && (
-                    <DevicePanel devices={devices} onRefresh={refreshDevices} />
-                )}
-
                 {activeTab === "history" && (
                     <HistoryPanel
                         history={history}
@@ -276,12 +204,6 @@ function App() {
                     />
                 )}
 
-                {activeTab === "multi" && (
-                    <MultiMachinePanel
-                        categories={categories}
-                        addNotification={addNotification}
-                    />
-                )}
             </main>
         </div>
     );

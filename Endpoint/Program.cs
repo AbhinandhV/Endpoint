@@ -16,22 +16,10 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")
         ?? "Data Source=endpoint.db"));
 
-// Authentication: Use API Key on Linux/cloud, Windows Auth on Windows
-var useApiKey = !OperatingSystem.IsWindows() ||
-    !string.IsNullOrEmpty(builder.Configuration["ApiKey"]);
+// Windows Authentication for local use
+builder.Services.AddAuthentication(NegotiateDefaults.AuthenticationScheme)
+    .AddNegotiate();
 
-if (useApiKey)
-{
-    // Simple API Key authentication for cloud hosting
-    builder.Services.AddAuthentication("ApiKey")
-        .AddScheme<ApiKeyAuthOptions, ApiKeyAuthHandler>("ApiKey", null);
-}
-else
-{
-    // Windows Authentication (Active Directory)
-    builder.Services.AddAuthentication(NegotiateDefaults.AuthenticationScheme)
-        .AddNegotiate();
-}
 builder.Services.AddAuthorization(options =>
 {
     options.FallbackPolicy = options.DefaultPolicy;
@@ -43,26 +31,15 @@ builder.Services.AddScoped<ActionHistoryService>();
 builder.Services.AddSingleton<PowerShellService>();
 builder.Services.AddScoped<AuditService>();
 
-// CORS — restrict in production, allow all in development
+// CORS for local development
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("Default", policy =>
     {
-        if (builder.Environment.IsDevelopment())
-        {
-            policy.WithOrigins("http://localhost:3000")
-                  .AllowAnyMethod()
-                  .AllowAnyHeader()
-                  .AllowCredentials();
-        }
-        else
-        {
-            // In production, allow any origin since we use API key auth
-            policy.SetIsOriginAllowed(_ => true)
-                  .AllowAnyMethod()
-                  .AllowAnyHeader()
-                  .AllowCredentials();
-        }
+        policy.WithOrigins("http://localhost:3000", "http://localhost:3001")
+              .AllowAnyMethod()
+              .AllowAnyHeader()
+              .AllowCredentials();
     });
 });
 
